@@ -8,6 +8,28 @@ var $ = util.$;
 var Promise = util.Promise;
 
 
+// Highlighter provides a simple way to draw highlighted <span> tags over
+// annotated ranges within a document.
+//
+// element - The root Element on which to dereference annotation ranges and
+//           draw highlights.
+// options - An options Object containing configuration options for the plugin.
+//           See `Highlighter.options` for available options.
+//
+var Highlighter = exports.Highlighter = function Highlighter(element, options) {
+    this.element = element;
+    this.options = $.extend(true, {}, Highlighter.options, options);
+};
+
+Highlighter.prototype.destroy = function () {
+    $(this.element)
+        .find("." + this.options.highlightClass)
+        .each(function (_, el) {
+            $(el).contents().insertBefore(el);
+            $(el).remove();
+        });
+};
+
 // highlightRange wraps the DOM Nodes within the provided range with a highlight
 // element of the specified class and returns the highlight Elements.
 //
@@ -15,7 +37,7 @@ var Promise = util.Promise;
 // cssClass - A CSS class to use for the highlight (default: 'annotator-hl')
 //
 // Returns an array of highlight Elements.
-function highlightRange(normedRange, cssClass) {
+Highlighter.prototype.highlightRange = function (normedRange, cssClass) {
     if (typeof cssClass === 'undefined' || cssClass === null) {
         cssClass = 'annotator-hl';
     }
@@ -41,10 +63,9 @@ function highlightRange(normedRange, cssClass) {
     return results;
 }
 
-
 // reanchorRange will attempt to normalize a range, swallowing Range.RangeErrors
 // for those ranges which are not reanchorable in the current document.
-function reanchorRange(range, rootElement) {
+Highlighter.prototype.reanchorRange = function (range, rootElement) {
     try {
         return xpathRange.Range.sniff(range).normalize(rootElement);
     } catch (e) {
@@ -57,29 +78,6 @@ function reanchorRange(range, rootElement) {
     }
     return null;
 }
-
-
-// Highlighter provides a simple way to draw highlighted <span> tags over
-// annotated ranges within a document.
-//
-// element - The root Element on which to dereference annotation ranges and
-//           draw highlights.
-// options - An options Object containing configuration options for the plugin.
-//           See `Highlighter.options` for available options.
-//
-var Highlighter = exports.Highlighter = function Highlighter(element, options) {
-    this.element = element;
-    this.options = $.extend(true, {}, Highlighter.options, options);
-};
-
-Highlighter.prototype.destroy = function () {
-    $(this.element)
-        .find("." + this.options.highlightClass)
-        .each(function (_, el) {
-            $(el).contents().insertBefore(el);
-            $(el).remove();
-        });
-};
 
 // Public: Draw highlights for all the given annotations
 //
@@ -128,7 +126,7 @@ Highlighter.prototype.draw = function (annotation) {
     var normedRanges = [];
 
     for (var i = 0, ilen = annotation.ranges.length; i < ilen; i++) {
-        var r = reanchorRange(annotation.ranges[i], this.element);
+        var r = this.reanchorRange(annotation.ranges[i], this.element);
         if (r !== null) {
             normedRanges.push(r);
         }
@@ -149,7 +147,7 @@ Highlighter.prototype.draw = function (annotation) {
         var normed = normedRanges[j];
         $.merge(
             annotation._local.highlights,
-            highlightRange(normed, this.options.highlightClass)
+            this.highlightRange(normed, this.options.highlightClass)
         );
     }
 

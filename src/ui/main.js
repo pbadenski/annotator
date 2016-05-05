@@ -211,6 +211,8 @@ function main(options) {
     }
 
     options.element = options.element || global.document.body;
+    options.textselector = options.textselector || textselector.TextSelector;
+    options.highlighter = options.highlighter || highlighter.Highlighter;
     options.editorExtensions = options.editorExtensions || [];
     options.viewerExtensions = options.viewerExtensions || [];
 
@@ -240,9 +242,9 @@ function main(options) {
 
         addPermissionsCheckboxes(s.editor, ident, authz);
 
-        s.highlighter = new highlighter.Highlighter(options.element);
+        s.highlighter = new options.highlighter(options.element);
 
-        s.textselector = new textselector.TextSelector(options.element, {
+        s.textselector = new options.textselector(options.element, {
             onSelection: function (ranges, event) {
                 if (ranges.length > 0) {
                     var annotation = makeAnnotation(ranges);
