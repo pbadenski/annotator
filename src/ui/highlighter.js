@@ -117,6 +117,32 @@ Highlighter.prototype.drawAll = function (annotations) {
     return p;
 };
 
+Highlighter.prototype.connectAnnotationToHighlights = function (annotation, highlights) {
+    var hasLocal = (typeof annotation._local !== 'undefined' &&
+                    annotation._local !== null);
+    if (!hasLocal) {
+        annotation._local = {};
+    }
+    var hasHighlights = (typeof annotation._local.highlights !== 'undefined' &&
+                         annotation._local.highlights === null);
+    if (!hasHighlights) {
+        annotation._local.highlights = [];
+    }
+
+    $.merge(annotation._local.highlights, highlights);
+
+    // Save the annotation data on each highlighter element.
+    $(annotation._local.highlights).data('annotation', annotation);
+
+    // Add a data attribute for annotation id if the annotation has one
+    if (typeof annotation.id !== 'undefined' && annotation.id !== null) {
+        $(annotation._local.highlights)
+            .attr('data-annotation-id', annotation.id);
+    }
+
+    return annotation._local.highlights;
+}
+
 // Public: Draw highlights for the annotation.
 //
 // annotation - An annotation Object for which to draw highlights.
@@ -130,37 +156,17 @@ Highlighter.prototype.draw = function (annotation) {
         if (r !== null) {
             normedRanges.push(r);
         }
-    }
+    } 
 
-    var hasLocal = (typeof annotation._local !== 'undefined' &&
-                    annotation._local !== null);
-    if (!hasLocal) {
-        annotation._local = {};
-    }
-    var hasHighlights = (typeof annotation._local.highlights !== 'undefined' &&
-                         annotation._local.highlights === null);
-    if (!hasHighlights) {
-        annotation._local.highlights = [];
-    }
-
+    var highlights = [];
     for (var j = 0, jlen = normedRanges.length; j < jlen; j++) {
         var normed = normedRanges[j];
         $.merge(
-            annotation._local.highlights,
+            highlights,
             this.highlightRange(normed, this.options.highlightClass)
         );
     }
-
-    // Save the annotation data on each highlighter element.
-    $(annotation._local.highlights).data('annotation', annotation);
-
-    // Add a data attribute for annotation id if the annotation has one
-    if (typeof annotation.id !== 'undefined' && annotation.id !== null) {
-        $(annotation._local.highlights)
-            .attr('data-annotation-id', annotation.id);
-    }
-
-    return annotation._local.highlights;
+    return this.connectAnnotationToHighlights(annotation, highlights) 
 };
 
 // Public: Remove the drawn highlights for the given annotation.
