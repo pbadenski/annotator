@@ -169,6 +169,15 @@ Highlighter.prototype.draw = function (annotation) {
     return this.connectAnnotationToHighlights(annotation, highlights) 
 };
 
+Highlighter.prototype.undrawHighlights = function (highlights) {
+  for (var i = 0, len = highlights.length; i < len; i++) {
+      var h = highlights[i];
+      if (h.parentNode !== null) {
+          $(h).replaceWith(h.childNodes);
+      }
+  }
+}
+
 // Public: Remove the drawn highlights for the given annotation.
 //
 // annotation - An annotation Object for which to purge highlights.
@@ -184,12 +193,7 @@ Highlighter.prototype.undraw = function (annotation) {
         return;
     }
 
-    for (var i = 0, len = annotation._local.highlights.length; i < len; i++) {
-        var h = annotation._local.highlights[i];
-        if (h.parentNode !== null) {
-            $(h).replaceWith(h.childNodes);
-        }
-    }
+    this.undrawHighlights(annotation._local.highlights);
     delete annotation._local.highlights;
 };
 
